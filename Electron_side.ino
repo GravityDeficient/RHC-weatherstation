@@ -59,6 +59,7 @@
 #define CNTS_TO_MPH (2.174)     // Speed in mph = 2.174 * counts/sec
 
 volatile int counter;
+int first_event;
 float gust;
 float total_x, total_y;
 int led;
@@ -74,7 +75,7 @@ unsigned long last_gust_time_in_secs;
 void publish_wind_event(float dt);
 int is_dst(void);
 
-ApplicationWatchdog wd(1200000, System.reset);
+ApplicationWatchdog wd(3600000, System.reset);  // Set the watchdog to reboot the Electron if it doesn't get pinged for 1 hour
 
 
 
@@ -107,6 +108,8 @@ void setup()
     sec = Time.second();
     last_time_in_secs = hr*3600 + min*60 + sec;
     last_gust_time_in_secs = last_time_in_secs;
+
+    first_event = 1;
     wd.checkin(); // ping the watchdog after the connection is made - in case it took a while.
 }
 
@@ -227,7 +230,9 @@ void publish_wind_event(float dt)
     // We give this event a unique name instead of naming it something like "wind" so we don't
     // end up reading everyone elses "wind" events.
     // -3- Ultimately I may publish these as private events so that only I can subscribe to them.
-    Particle.publish("WL3X", buf);
+    if (first_event) Particle.publish("WL3XX", buf);
+    else             Particle.publish("WL3X", buf);
+    first_event = 0;
 }
 
 
