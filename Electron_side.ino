@@ -28,7 +28,6 @@
 //
 // To-do:
 // - Figure out why I get a big jump in wind gust when I have a connection outage.
-// - Consider reading battery voltage and publishing that variable using Particle.variable()
 // - Encode mph with alpha-numerics and do fractions of MPH. Using upper-case letters and numbers we can encode 0-129 mph in 0.1 mph increments (using 2 chars).
 //   If I used the printable ASCII characters (32-126) I could encode speed in 1/2 MPH increments with a single character (from 0 to 47 mph).
 //   Two characters would allow me to describe direction to about 1/25th of a degree.
@@ -46,6 +45,7 @@
 //          Particle.connected() and do whatever you want when this returns false.
 //      Also look at: ApplicationWatchdog()
 //      Discussion here: https://community.particle.io/t/using-lots-of-data-to-connect/31292/8
+// - Consider reading battery voltage and publishing that variable using Particle.variable()
 // - Perhaps I should register a function using Particle.function() that allows me to change the update rate and start/stop times.
 // - Figure out something about webhooks, REST, IFTTT
 //
@@ -74,6 +74,7 @@ unsigned long last_gust_time_in_secs;
 void publish_wind_event(float dt);
 int is_dst(void);
 
+ApplicationWatchdog wd(1200000, System.reset);
 
 
 
@@ -106,6 +107,7 @@ void setup()
     sec = Time.second();
     last_time_in_secs = hr*3600 + min*60 + sec;
     last_gust_time_in_secs = last_time_in_secs;
+    wd.checkin(); // ping the watchdog after the connection is made - in case it took a while.
 }
 
 
@@ -176,7 +178,8 @@ void loop()
 
     if (loop_counter >= PUBLISH_FREQ)
     {
-        digitalWrite(4, HIGH);  // Trigger the external watchdog to let it know we're still alive
+        wd.checkin();
+        // digitalWrite(4, HIGH);  // Trigger the external watchdog to let it know we're still alive
         Serial.print("Time in seconds: ");
         dt = (float)(time_in_secs-last_time_in_secs);
         Serial.println(dt);
@@ -188,7 +191,7 @@ void loop()
         gust = 0;
         total_x = 0;
         total_y = 0;
-        digitalWrite(4, LOW);  // End the watchdog trigger pulse
+        // digitalWrite(4, LOW);  // End the watchdog trigger pulse
     }
 }
 
