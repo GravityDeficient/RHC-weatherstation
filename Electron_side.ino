@@ -98,9 +98,15 @@
 // rhc 2018-01-01   Added support for MAX6675 temperature sensor
 // rhc 2018-01-10   Added code to have pin B0 ping the external watchdog
 // rhc 2018-01-27   Got rid of the MAX6675 temperature sensor and replaced it with the BMP280 temperature and pressure sensor.
+// see 2019-03-02   - Added variable for event name and first event name
+//                  - Defined temperature and pressure to be zero when sensor is not present.
+//                  - Moved BMP280 to its own .h library file.
+//                  - Change serial.print to serial logging. With logging enabled we can see more details on the connection state.
+//                  - Removed the delay 10000 in favor or a timer so we dont need to hold up the entire app. This allows logging to work even between measurements.
 //===============================================================================================================
 #include <math.h>
 #include <stdlib.h>
+#include <BMP280.h>
 
 #define R2D (57.2958)
 #define WIND_DIR_OFFSET (-94.5)
@@ -111,6 +117,13 @@
 
 //-3- set this to 1 if this sensor has a BME280 temperature and pressure sensor
 #define BME280_PRESENT (0)
+
+//-3- set this to the event name you are listening for and the desired first event name (should be the same with an appended charachter)
+#define EVENT_NAME ("WL3X")
+#define FIRST_EVENT_NAME ("WL3XX")
+
+//-3- Set the desired timezone
+#define TIMEZONE (-7)
 
 volatile int counter;
 int publish_min;  // Publish an event the first time we see we're at this minute.
@@ -126,188 +139,32 @@ int last_hr = 0;
 unsigned long time_in_secs;
 unsigned long last_time_in_secs;
 unsigned long last_gust_time_in_secs;
+unsigned long previousMillis = 0;
+const long interval = 10000;
 
 void publish_wind_event(float dt);
 int is_dst(void);
 void click(void);
 float get_battery_voltage(void);
 
-
+SerialLogHandler logHandler; // Enable Serial Logging
 ApplicationWatchdog wd(3600000, System.reset);  // Set the watchdog to reboot the Electron if it doesn't get pinged for 1 hour
 
-// Start of the .h file for BMP280 ==============================================================
-
-
-//Register names:
-#define BME280_DIG_T1_LSB_REG      0x88
-#define BME280_DIG_T1_MSB_REG     0x89
-#define BME280_DIG_T2_LSB_REG     0x8A
-#define BME280_DIG_T2_MSB_REG     0x8B
-#define BME280_DIG_T3_LSB_REG     0x8C
-#define BME280_DIG_T3_MSB_REG     0x8D
-#define BME280_DIG_P1_LSB_REG     0x8E
-#define BME280_DIG_P1_MSB_REG     0x8F
-#define BME280_DIG_P2_LSB_REG     0x90
-#define BME280_DIG_P2_MSB_REG     0x91
-#define BME280_DIG_P3_LSB_REG     0x92
-#define BME280_DIG_P3_MSB_REG     0x93
-#define BME280_DIG_P4_LSB_REG     0x94
-#define BME280_DIG_P4_MSB_REG     0x95
-#define BME280_DIG_P5_LSB_REG     0x96
-#define BME280_DIG_P5_MSB_REG     0x97
-#define BME280_DIG_P6_LSB_REG     0x98
-#define BME280_DIG_P6_MSB_REG     0x99
-#define BME280_DIG_P7_LSB_REG     0x9A
-#define BME280_DIG_P7_MSB_REG     0x9B
-#define BME280_DIG_P8_LSB_REG     0x9C
-#define BME280_DIG_P8_MSB_REG     0x9D
-#define BME280_DIG_P9_LSB_REG     0x9E
-#define BME280_DIG_P9_MSB_REG     0x9F
-#define BME280_DIG_H1_REG       0xA1
-#define BME280_CHIP_ID_REG        0xD0 //Chip ID
-#define BME280_RST_REG          0xE0 //Softreset Reg
-#define BME280_DIG_H2_LSB_REG     0xE1
-#define BME280_DIG_H2_MSB_REG     0xE2
-#define BME280_DIG_H3_REG       0xE3
-#define BME280_DIG_H4_MSB_REG     0xE4
-#define BME280_DIG_H4_LSB_REG     0xE5
-#define BME280_DIG_H5_MSB_REG     0xE6
-#define BME280_DIG_H6_REG       0xE7
-#define BME280_CTRL_HUMIDITY_REG    0xF2 //Ctrl Humidity Reg
-#define BME280_STAT_REG         0xF3 //Status Reg
-#define BME280_CTRL_MEAS_REG      0xF4 //Ctrl Measure Reg
-#define BME280_CONFIG_REG       0xF5 //Configuration Reg
-#define BME280_PRESSURE_MSB_REG     0xF7 //Pressure MSB
-#define BME280_PRESSURE_LSB_REG     0xF8 //Pressure LSB
-#define BME280_PRESSURE_XLSB_REG    0xF9 //Pressure XLSB
-#define BME280_TEMPERATURE_MSB_REG    0xFA //Temperature MSB
-#define BME280_TEMPERATURE_LSB_REG    0xFB //Temperature LSB
-#define BME280_TEMPERATURE_XLSB_REG   0xFC //Temperature XLSB
-#define BME280_HUMIDITY_MSB_REG     0xFD //Humidity MSB
-#define BME280_HUMIDITY_LSB_REG     0xFE //Humidity LSB
-
-
-//Class SensorSettings.  This object is used to hold settings data.  The application
-//uses this classes' data directly.  The settings are adopted and sent to the sensor
-//at special times, such as .begin.  Some are used for doing math.
-//
-//This is a kind of bloated way to do this.  The trade-off is that the user doesn't
-//need to deal with #defines or enums with bizarre names.
-//
-//A power user would strip out SensorSettings entirely, and send specific read and
-//write command directly to the IC. (ST #defines below)
-//
-struct SensorSettings
-{
-public:
-
-    //Main Interface and mode settings
-    uint8_t I2CAddress;
-    uint8_t chipSelectPin;
-
-    uint8_t runMode;
-    uint8_t tStandby;
-    uint8_t filter;
-    uint8_t tempOverSample;
-    uint8_t pressOverSample;
-    uint8_t humidOverSample;
-};
-
-
-//Used to hold the calibration constants.  These are used
-//by the driver as measurements are being taking
-struct SensorCalibration
-{
-public:
-    uint16_t dig_T1;
-    int16_t dig_T2;
-    int16_t dig_T3;
-
-    uint16_t dig_P1;
-    int16_t dig_P2;
-    int16_t dig_P3;
-    int16_t dig_P4;
-    int16_t dig_P5;
-    int16_t dig_P6;
-    int16_t dig_P7;
-    int16_t dig_P8;
-    int16_t dig_P9;
-
-    uint8_t dig_H1;
-    int16_t dig_H2;
-    uint8_t dig_H3;
-    int16_t dig_H4;
-    int16_t dig_H5;
-    uint8_t dig_H6;
-};
-
-
-
-//This is the main operational class of the driver.
-
-class BME280
-{
-public:
-    //settings
-    SensorSettings settings;
-    SensorCalibration calibration;
-    int32_t t_fine;
-
-    //Constructor generates default SensorSettings.
-    //(over-ride after construction if desired)
-    BME280( void );
-    //~BME280() = default;
-
-    //Call to apply SensorSettings.
-    //This also gets the SensorCalibration constants
-    uint8_t begin( void );
-
-    //Software reset routine
-    void reset( void );
-
-    //Returns the values as floats.
-    float readFloatPressure( void );
-
-    //Temperature related methods
-    float readTempF( void );
-
-    //The following utilities read and write
-
-    //ReadRegisterRegion takes a uint8 array address as input and reads
-    //a chunk of memory into that array.
-    void readRegisterRegion(uint8_t*, uint8_t, uint8_t );
-    //readRegister reads one register
-    uint8_t readRegister(uint8_t);
-    //Reads two regs, LSByte then MSByte order, and concatenates them
-    //Used for two-byte reads
-    int16_t readRegisterInt16( uint8_t offset );
-    //Writes a byte;
-    void writeRegister(uint8_t, uint8_t);
-};
-
-
-// End of .h file for BMP280 ==============================================================
-
-
 BME280 mySensor;
-
-
-
-
-
 
 //@@ setup===============================================================================================================
 //=======================================================================================================================
 void setup()
 {
-    int i, dst_status;
+    int i;
     int hr, min, sec;
+
+    serialConnectBanner();
 
     //***Driver settings for BMP280 sensor **************//
     //specify chipSelectPin using arduino pin names
     //specify I2C address.  Can be 0x77(default) or 0x76
     mySensor.settings.I2CAddress = 0x77;
-
 
     //***Operation settings for BMP280 sensor ***********//
     mySensor.settings.runMode = 3; //  3, Normal mode
@@ -324,13 +181,10 @@ void setup()
     //  1 through 5, oversampling *1, *2, *4, *8, *16 respectively
     mySensor.settings.pressOverSample = 1;
 
-
-    Serial.begin(9600);
     delay(10);  //Make sure sensor had enough time to turn on. BME280 requires 2ms to start up.
 
     //Calling .begin() causes the settings to be loaded
-    Serial.println(mySensor.begin(), HEX);
-
+    mySensor.begin();
 
     led = 0;
     pinMode(A0, INPUT);  // This will monitor the gel-cell battery voltage.
@@ -339,17 +193,13 @@ void setup()
     pinMode(D7, OUTPUT);  // controls LED
     pinMode(D2, INPUT);   // This reads the input from the wind cups
 
-
     digitalWrite(B0, LOW);  // Trigger the external watchdog to let it know we're alive
     delay(1);
     digitalWrite(B0, HIGH);
 
     attachInterrupt(D2, click, RISING);      // Call click() when interrupt 0 (digital pin 2) rises (this is the wind cups spinning)
 
-    // Set time zone (-7.0 during DST; -8.0 otherwise)  // -3- this should be checked daily rather than doing it once at startup.
-    dst_status = is_dst();
-    if (dst_status) Time.zone(-7);  // Set for Pacific daylight time.
-    else            Time.zone(-8);  // Set for Pacific standard time.
+    setTimeZone(); // Set the timezone from the provided const TIMEZONE offset
 
     counter = 0;
     gust = 0.0;
@@ -377,11 +227,6 @@ void setup()
     wd.checkin(); // ping the watchdog after the connection is made - in case it took a while.
 }
 
-
-
-
-
-
 //@@ loop================================================================================================================
 // We'll loop every 10 seconds and check the wind speed and direction.  We'll do this for 8 minutes, and then publish an
 // event with the average wind speed, the wind gust (highest 10 second reading), and the average wind direction.
@@ -393,87 +238,83 @@ void loop()
     float x, y;
     float angle, dt;
     int hr, min, sec;
+    unsigned long currentMillis = millis();
 
-    delay(10000);  // Take wind speed and direction readings every 10 seconds
+    serialConnectBanner();
 
-    hr = Time.hour();
-    min = Time.minute();
-    sec = Time.second();
-    time_in_secs = hr*3600 + min*60 + sec;
+    if (currentMillis - previousMillis >= interval) { // Take wind speed and direction readings every 10 seconds
+        previousMillis = currentMillis;
+        hr = Time.hour();
+        min = Time.minute();
+        sec = Time.second();
+        time_in_secs = hr*3600 + min*60 + sec;
 
-    if (hr < last_hr) Particle.syncTime();  // Sync the clock with the cloud every day at midnight.
-    last_hr = hr;                           // Note that it automatically syncs when it connects to the cloud.
+        if (hr < last_hr) {
+            Particle.syncTime();  // Sync the clock with the cloud every day at midnight.
+            setTimeZone(); // Reset the timezone every day to allow DST adjustments
+        }
+        last_hr = hr; // Note that it automatically syncs when it connects to the cloud.
 
-    Serial.print("Time: ");
-    Serial.print(hr);
-    Serial.print(":");
-    Serial.println(min);
+        Log.info("Time: %d:%d", hr, min);
 
-    dir = analogRead(A1);
+        dir = analogRead(A1);
 
-    angle = 15.0 + (345.0/4095.0) * (float)(dir);  // NOTE: we use 345 rather than 360 because there's a roughly 15 degree dead-spot
-    // Nominally the arm is supposed to be aimed true North, but there's a dead-spot about 0-15 deg.
+        angle = 15.0 + (345.0/4095.0) * (float)(dir);  // NOTE: we use 345 rather than 360 because there's a roughly 15 degree dead-spot
+        // Nominally the arm is supposed to be aimed true North, but there's a dead-spot about 0-15 deg.
 
-    x = cos(angle/R2D);
-    y = sin(angle/R2D);
-    total_x += x;
-    total_y += y;
+        x = cos(angle/R2D);
+        y = sin(angle/R2D);
+        total_x += x;
+        total_y += y;
 
-    wind_cntr = counter; // this keeps the total count for the event publish interval (currently 8 minutes)
+        wind_cntr = counter; // this keeps the total count for the event publish interval (currently 8 minutes)
 
-    //-3- it looks like this is the problem.  If we lose connection the time could end up being much more than 10 seconds.
-    dt = (float)(time_in_secs - last_gust_time_in_secs);
-    // speed = 2.174 * (float)(wind_cntr - last_wind_cntr) / dt;  // this gives wind speed in mph for the anemometer at Mussel Rock
-    speed = CNTS_TO_MPH * (float)(wind_cntr - last_wind_cntr) / dt;  // this gives wind speed in mph for the Davis 6410 anemometer
-    if (speed > gust) gust = speed;
-    last_wind_cntr = wind_cntr;
-    loop_counter += 1;
-    last_gust_time_in_secs = time_in_secs;
+        //-3- it looks like this is the problem.  If we lose connection the time could end up being much more than 10 seconds.
+        dt = (float)(time_in_secs - last_gust_time_in_secs);
+        // speed = 2.174 * (float)(wind_cntr - last_wind_cntr) / dt;  // this gives wind speed in mph for the anemometer at Mussel Rock
+        speed = CNTS_TO_MPH * (float)(wind_cntr - last_wind_cntr) / dt;  // this gives wind speed in mph for the Davis 6410 anemometer
+        if (speed > gust) gust = speed;
+        last_wind_cntr = wind_cntr;
+        loop_counter += 1;
+        last_gust_time_in_secs = time_in_secs;
+        Log.info("Wind Counter: %d Dir: %d", wind_cntr, angle);
 
-    Serial.print("wind counter: ");
-    Serial.print(wind_cntr);
-    Serial.print("  Dir: ");
-    Serial.println(angle);
+        if (led_on == 1)
+        {
+            digitalWrite(D7, LOW);
+            led_on = 0;
+        }
+        else
+        {
+            digitalWrite(D7, HIGH);
+            led_on = 1;
+        }
 
-    if (led_on == 1)
-    {
-        digitalWrite(D7, LOW);
-        led_on = 0;
-    }
-    else
-    {
-        digitalWrite(D7, HIGH);
-        led_on = 1;
-    }
+        if (min == publish_min)
+        {
+            publish_min += 5;
+            if (publish_min >= 60) publish_min -= 60;
+            wd.checkin();
 
-    if (min == publish_min)
-    {
-        publish_min += 5;
-        if (publish_min >= 60) publish_min -= 60;
-        wd.checkin();
+            digitalWrite(B0, LOW);  // Trigger the external watchdog to let it know we're still alive
+            delay(1);
+            digitalWrite(B0, HIGH);
 
-        digitalWrite(B0, LOW);  // Trigger the external watchdog to let it know we're still alive
-        delay(1);
-        digitalWrite(B0, HIGH);
-
-        Serial.print("Time in seconds: ");
-        dt = (float)(time_in_secs-last_time_in_secs);
-        Serial.println(dt);
-        last_time_in_secs = time_in_secs;
-        /* if (hr >= 8 && hr < 20)  We publish wind events 24 hrs/day now since Particle up'd the monthly data from 1MB to 3MB */
-        publish_wind_event(dt);
-        counter = 0;
-        last_wind_cntr = 0;
-        loop_counter = 0;
-        gust = 0;
-        total_x = 0;
-        total_y = 0;
-        // digitalWrite(4, LOW);  // End the watchdog trigger pulse
+            dt = (float)(time_in_secs-last_time_in_secs);
+            Log.info("Time in seconds: %d", dt);
+            last_time_in_secs = time_in_secs;
+            /* if (hr >= 8 && hr < 20)  We publish wind events 24 hrs/day now since Particle up'd the monthly data from 1MB to 3MB */
+            publish_wind_event(dt);
+            counter = 0;
+            last_wind_cntr = 0;
+            loop_counter = 0;
+            gust = 0;
+            total_x = 0;
+            total_y = 0;
+            // digitalWrite(4, LOW);  // End the watchdog trigger pulse
+        }
     }
 }
-
-
-
 
 void publish_wind_event(float dt)
 {
@@ -498,6 +339,9 @@ void publish_wind_event(float dt)
     wind_dir = (int)(dir + 0.5);
     if (wind_dir >= 360) wind_dir -= 360;
     if (wind_dir < 0) wind_dir += 360;
+    temperature = 0;
+    ipressure = 0;
+    itemp = 0;
     if (BME280_PRESENT)
     {
         temperature = mySensor.readTempF();
@@ -509,10 +353,7 @@ void publish_wind_event(float dt)
 
     //-3- pick one of these depending on sensor
     sprintf(buf, "%02d%02d%03d%03d%05d%02d", wind_speed, wind_gust, wind_dir, itemp, ipressure, (int)voltage);  // This one is for Joe's Cayucos sensor
-    sprintf(buf, "%02d%02d%03d%02d", wind_speed, wind_gust, wind_dir, (int)voltage);  // this one is for the M.R. sensor (no temp./pressure sensor)
-
-    Serial.print("publish: ");
-    Serial.println(buf);
+//    sprintf(buf, "%02d%02d%03d%02d", wind_speed, wind_gust, wind_dir, (int)voltage);  // this one is for the M.R. sensor (no temp./pressure sensor)
 
     // Particle.publish(String eventName, String data);
     // We give this event a unique name instead of naming it something like "wind" so we don't
@@ -523,8 +364,20 @@ void publish_wind_event(float dt)
     // if (first_event) Particle.publish("JL3XX", buf);
     // else             Particle.publish("JL3X", buf);
 
-    if (first_event) Particle.publish("WL3XX", buf);
-    else             Particle.publish("WL3X", buf);
+    // if (first_event) Particle.publish("WL3XX", buf);
+    // else             Particle.publish("WL3X", buf);
+
+    // Updated to use new constants for
+    if (first_event) {
+        Log.info("Event: %s", FIRST_EVENT_NAME);
+        Log.info("Publish: %s", buf);
+        Particle.publish(FIRST_EVENT_NAME, buf);
+    }
+    else {
+        Log.info("Event: %s", EVENT_NAME);
+        Log.info("Publish: %s", buf);
+        Particle.publish(EVENT_NAME, buf);
+    }
 
     first_event = 0;
 }
@@ -561,8 +414,7 @@ float get_battery_voltage()
     // voltage coming out of the voltage divider.
 
     batt_voltage = (float)voltage / 218.52;
-    // Serial.print("Batt: ");
-    // Serial.println(batt_voltage);
+    Log.info("Batt: %d", batt_voltage);
 
     // We want to express the voltage as two digits so we'll subtract 5 volts and
     // then divide by 10.  This way 5-14.9 Volts becomes 0-99
@@ -776,9 +628,6 @@ void BME280::readRegisterRegion(uint8_t *outputPointer , uint8_t offset, uint8_t
     }
 }
 
-
-
-
 uint8_t BME280::readRegister(uint8_t offset)
 {
     //Return value
@@ -815,4 +664,37 @@ void BME280::writeRegister(uint8_t offset, uint8_t dataToWrite)
     Wire.write(offset);
     Wire.write(dataToWrite);
     Wire.endTransmission();
+}
+
+void setTimeZone() {
+    int dst_status;
+    // Set time zone (-7.0 during DST; -8.0 otherwise)
+    dst_status = is_dst();
+    if (dst_status) Time.zone(TIMEZONE);  // Set for Pacific daylight time.
+    else            Time.zone(TIMEZONE - 1);  // Set for Pacific standard time.
+}
+
+//****************************************************************************//
+//  Serial connection banner -
+//      Logs information about currently the running firmware on serial connect
+//****************************************************************************//
+void serialConnectBanner() {
+    static int serial_state;
+
+    // on serial connect we output the data on the running firmware
+    if(Serial.isConnected() && serial_state == 0) {
+
+        Log.info("DeviceID: %s", (const char*)System.deviceID());
+        Log.info("System Version: %s", System.version().c_str());
+        Log.info("BME280_PRESENT: %s", BME280_PRESENT);
+        Log.info("EVENT_NAME: %s", EVENT_NAME);
+        Log.info("FIRST_EVENT_NAME: %s", FIRST_EVENT_NAME);
+        Log.info("UpTime: %d", System.uptime() / 60);
+
+        serial_state = 1;
+    }
+
+    if(!Serial.isConnected()) {
+        serial_state = 0;
+    }
 }
