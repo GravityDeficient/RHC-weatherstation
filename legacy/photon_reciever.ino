@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------
-// This app runs on the Particle IO Photon.  It will:
+// This app runs on the Particle IO photon.  It will:
 // - Subscribe to the events being published by Particle IO Electrons that
 //   read the wind sensors.
 // - Parse the data from those events.

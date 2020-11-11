@@ -1,5 +1,5 @@
 //=========================================================================================================
-// This acts as the external watchdog to reset the Electron if it hasn't pinged the Arduino in 
+// This acts as the external watchdog to reset the Electron/Boron/Argon if it hasn't pinged the Arduino in 
 // 20 minutes.  It should ping the Arduino every 8 minutes
 //=========================================================================================================
 

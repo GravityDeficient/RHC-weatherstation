@@ -1,9 +1,9 @@
 //===============================================================================================================
 // This code for the Particle Electron publishes an event with wind data every 5 minutes 24 hrs/day.
 // It publishes on each whole 5 minute interval (i.e. 10:00, 10:05; 10:10...).
-// There is also be a Particle Photon that subscribes to the published data events.  The Electron uses the
-// cell phone network, so it's important to keep the data usage very low.  The Photon can be on a wifi somewhere
-// (anywhere really).  The Photon get the published events, parses the terse data, forms the HTTP GET requests
+// There is also be a Particle photon that subscribes to the published data events.  The Electron uses the
+// cell phone network, so it's important to keep the data usage very low.  The photon can be on a wifi somewhere
+// (anywhere really).  The photon get the published events, parses the terse data, forms the HTTP GET requests
 // to update Weather Underground and/or WeatherFlow (aka iKitesurf), and submits those HTTP GET requests via wifi.
 //
 // Wiring to the wind instrument (Davis Instruments Anemometer and weather vane #6410; about $120 from Amazon):
@@ -34,7 +34,7 @@
 //  - SO or MISO to Electron A4    (master-in/slave-out)
 //
 // Wiring the Watchdog/Arduino Pro-Mini
-//  - Electron B0 held high (3.3V) with a 20K resistor
+//  - Electron A0 held high (3.3V) with a 20K resistor
 //  - Electon B0 to Arduino D2.  This is the line that pings the Arduino to let it know all is well still.
 //  - Arduino D3 to Electron Reset.  This resets the Electron if a ping isn't received for 20 minutes.
 //
@@ -79,7 +79,7 @@
 //   Two characters would allow me to describe direction to about 1/25th of a degree.
 // - Maybe I should send previous data with each event.  This could allow me to fill in gaps, or to get greater granularity even if
 //   I don't increase the update rate.
-// - Figure out whether the failed updates are happening on the Electron or Photon side (by watching the logs).
+// - Figure out whether the failed updates are happening on the Electron or photon side (by watching the logs).
 // - Consider having it sleep at night (lower current draw and potentially some data savings)
 //    https://docs.particle.io/reference/firmware/electron/#sleep-sleep-
 //    Probably should have sleep from sunset to sun-up.  Figure out what those hours are each month.
@@ -106,7 +106,7 @@
 //===============================================================================================================
 #include <math.h>
 #include <stdlib.h>
-#include <BMP280.h>
+#include "BMP280.h"
 
 #define R2D (57.2958)
 #define WIND_DIR_OFFSET (-94.5)
