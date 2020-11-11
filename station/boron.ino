@@ -272,7 +272,7 @@ void publish_wind_event(float dt)
     voltage = get_battery_voltage();
 
     if (bme280_present) {
-        sprintf(buf, "%02d%02d%03d%03d%05d%02d%1d", wind_speed, wind_gust, wind_dir, itemp, ipressure, humidity, (int)voltage, first_event);
+        sprintf(buf, "%02d%02d%03d%03d%05d%03d%02d%1d", wind_speed, wind_gust, wind_dir, itemp, ipressure, humidity, (int)voltage, first_event);
     } else if (bmp280_present) {
         sprintf(buf, "%02d%02d%03d%03d%05d%02d%1d", wind_speed, wind_gust, wind_dir, itemp, ipressure, (int)voltage, first_event);
     } else {
