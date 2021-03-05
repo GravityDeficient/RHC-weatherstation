@@ -1,6 +1,7 @@
 # RHC - Weather Station
 An open source self contained weather station for remote applications where wifi and power are not available.
-![Soboba Flight Park Weather Station](assets/soboba-weather-station.jpeg)
+
+![Soboba Flight Park Weather Station](assets/soboba-weather-station_50.jpeg)
 ### Overview
 
 The weather station is based around the Particle Cloud platform and the latest design uses the Particle.IO Boron LTE CAT-M1 development board for processing and connectivity. 

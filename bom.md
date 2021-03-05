@@ -1,11 +1,12 @@
 ### BOM
-
-#### Hardware Power and Sensors
+![Assembled Board](assets/comp-board.jpg)
+#### Hardware Power and Sensors 
 1. 20A Solar Charge Controller --[Amazon](https://www.amazon.com/gp/product/B072MMDY4F)
 2. ExpertPower 12v 9ah Sealed Lead Acid Battery --[Amazon](https://www.amazon.com/ExpertPower-EXP1290-2-Batteries-BX1300LCD-Replacement/dp/B001NJ3H0C)
 3. 10W Solar Panel --[Amazon](https://www.amazon.com/gp/product/B00OZC3X1C/)
 4. Cantex 5133712 Electrical Box --[Ebay](https://www.ebay.com/itm/CANTEX-5133712-Electrical-Box-PVC-8-5-8x8-5-8x4-in/383686744477?ssPageName=STRK%3AMEBIDX%3AIT&_trksid=p2060353.m2749.l2649)
 5. Davis Instruments 6410 Anemometer --[Ebay](https://www.ebay.com/itm/Davis-Instruments-6410-Davis-Anemometer-For-Vantage-Pro-Pro2-6152-New/383033311103?ssPageName=STRK%3AMEBIDX%3AIT&_trksid=p2060353.m2749.l2649)
+6. 1/2 NPT Nylon Cable Gland --[Amazon 12pcs](https://www.amazon.com/gp/product/B07ZRH3V59/ref=ppx_yo_dt_b_asin_title_o02_s00?ie=UTF8&psc=1)
 
 ##### Optional Sensors
 - BMP280 (Preasure, Temperature) --[Amazon](https://www.amazon.com/GY-BMP280-3-3-Precision-Atmospheric-Pressure-Barometric/dp/B087ZRGSC8/)
@@ -22,4 +23,6 @@
 8. 1x C104 capacitor (0.1uF Ceramic Capacitor)
 9. 1x 74HC14 Schmitt−Trigger
 10. 2x 40 Pin 2.54mm Female Pin Header -This is broken up and used in 3 rows of 12 pins and 1 row of 16 pins.
-11. 1x 40 Pin 2.54mm Male Pin Header -We only use half part of it. A contunus row of 14 pins works best.
+11. 1x 40 Pin 2.54mm Male Pin Header -We only use half part of it. A continuous row of 9 pins works best.
+12. 1x RJ11 jack [Digikey](https://www.digikey.com/en/products/detail/molex/0428786218/1643555?fbclid=IwAR25BFjS8wmGcxs4Fdm_FhYCm_qfz086uZllJZwaUtoYospMrM7lY-TGBVw)
+13. 1x (optional) 14pin dip chip socket

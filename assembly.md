@@ -54,10 +54,10 @@ This may differ depending on your sensor
  - Use 22K and 4.7K resistors to make a voltage divider (12V will map to 2.11V);  22K on top (to +side of gel cell) and 4.7K on bottom (to Gnd).
    Center of divider connects to input A5 of the Boron.
    
-   **IMPORTANT NOTE:** the particular charge controller I got for our wind station has positive common between the solar panel input, battery input, and load.
-         This would normally make it impossible to read battery voltage from an analog input on the Boron.  But as luck would have it it the
-         battery and USB output (that I use to power the Boron) share a common ground.  This makes it possible.  DO NOT do this if the
-         battery and Boron don't share a common ground.
+**IMPORTANT NOTE:** the particular charge controller I got for our wind station has positive common between the solar panel input, battery input, and load.
+     This would normally make it impossible to read battery voltage from an analog input on the Boron.  But as luck would have it it the
+     battery and USB output (that I use to power the Boron) share a common ground.  This makes it possible.  DO NOT do this if the
+     battery and Boron don't share a common ground.
 
 #### Solar Notes 
-looks like this settles into about 43mA at 5V; but frequently goes up to 160mA. Apparently it can run more than 1A during a publish.)
+(Electron -legacy) looks like this settles into about 43mA at 5V; but frequently goes up to 160mA. Apparently it can run more than 1A during a publish.
