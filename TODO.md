@@ -19,3 +19,4 @@
       Also look at: ApplicationWatchdog()
       Discussion here: https://community.particle.io/t/using-lots-of-data-to-connect/31292/8
 - [Cleanup] Share the PCB design on a site like pcbway where they can be ordered
+- [Boron Update] On Gen3 devices (and since DeviceOS 0.5.3) it is no longer necessary to set pinMode().  Pine Mtn station had an issue with bad readings on A4. Particle Support believes that setting pinmode() could be the culprit.  "You do not need to set the pinMode() to read an analog value using analogRead as the pin will automatically be set to the correct mode when analogRead is called." https://docs.particle.io/cards/firmware/input-output/analogread-adc/
