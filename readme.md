@@ -13,5 +13,5 @@ Listener software running on a base unit (internet connected Particle Argon) or 
 
 - [Recommended BOM](bom.md) 
 - [Assembly instructions](assembly.md)
-- [Particle-Listener](https://github.com/GravityDeficient/particle-listener) Reciever applictaion written in NodeJS
+- [RHC-Weatherstation-Listener](https://github.com/GravityDeficient/RHC-Weatherstation-Listener) Reciever applictaion written in NodeJS
 - [To-Do](TODO.md)
