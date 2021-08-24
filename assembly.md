@@ -49,7 +49,7 @@ This may differ depending on your sensor
    a bit it went up to 40mA (maybe it was in the shadow of the roof overhang).
    When the sun peeked out for a few minutes I took additional readings: 98mA through the window and 160mA not looking through window.
    More solar panel results: bright sunny winter day - 305mA through bedroom window; 430mA without window (with battery already at 3.8V).
-   ExpertPower recommended settings for EXP1233 battery:  Type B01 (14.4V boost, absorption, equalization); Float 13.8V; Discharge stop 11.0V.
+ - ExpertPower recommended settings for EXP1233 battery:  Type B01 (14.4V boost, absorption, equalization); Float 13.8V; Discharge stop 11.0V.
 
 #### Battery voltage monitoring:
  - Use 22K and 4.7K resistors to make a voltage divider (12V will map to 2.11V);  22K on top (to +side of gel cell) and 4.7K on bottom (to Gnd).
