@@ -251,8 +251,8 @@ void publish_wind_event(float dt)
 
         Log.info("Temperature: %i F", temp);
         Log.info("iTemperature: %i F", itemp);
-        Log.info("Preassure: %i mBar", pressure);
-        Log.info("iPreassure: %i mBar", ipressure);
+        Log.info("Pressure: %i mBar", pressure);
+        Log.info("iPressure: %i mBar", ipressure);
         Log.info("Humidity: %i %", humidity);
 
     } else if (bmp280_present) {
@@ -264,8 +264,8 @@ void publish_wind_event(float dt)
 
         Log.info("Temperature: %i F", temp);
         Log.info("iTemperature: %i F", itemp);
-        Log.info("Preassure: %i mBar", pressure);
-        Log.info("iPreassure: %i mBar", ipressure);
+        Log.info("Pressure: %i mBar", pressure);
+        Log.info("iPressure: %i mBar", ipressure);
 
     }
 
