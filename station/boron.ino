@@ -328,9 +328,12 @@ float get_battery_voltage()
 }
 
 // ============================================================================
-// Return 1 if we're currently observing Daylight Savings Time.
-// I begin DST on March 12 and end it on November 5 (I think it always happens
-// on a Sunday in real life, but this will have to do)
+// Return 1 if we're currently observing Daylight Saving Time.
+// DST dates are calculated based on the configuration in config.h,
+// which can be overridden by settings in config.local.h.
+// By default, DST starts on the second Sunday in March and ends on the first
+// Sunday in November, but this can be customized in the config files.
+// See config.local.h.example for an example of how to override these settings.
 // ============================================================================
 int is_dst()
 {
@@ -339,11 +342,12 @@ int is_dst()
     int month = Time.month();
     int day = Time.day();
 
-    // DST starts at 2:00 AM on the second Sunday in March
-    int dstStart = (14 - (1 + year * 5 / 4) % 7);
+    // Calculate the day of the month for DST start and end
+    int dstStart = (DST_START_WEEK * 7) - 7 + DST_START_DOW - (Time.weekday(DST_START_MONTH, 1, year) - 1) + 1;
+    if (dstStart > 7) dstStart -= 7;
     
-    // DST ends at 2:00 AM on the first Sunday in November
-    int dstEnd = (7 - (1 + year * 5 / 4) % 7);
+    int dstEnd = (DST_END_WEEK * 7) - 7 + DST_END_DOW - (Time.weekday(DST_END_MONTH, 1, year) - 1) + 1;
+    if (dstEnd > 7) dstEnd -= 7;
 
     if (month > DST_START_MONTH && month < DST_END_MONTH) return 1;
     if (month == DST_START_MONTH && day >= dstStart) return 1;

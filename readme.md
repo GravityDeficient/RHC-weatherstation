@@ -29,6 +29,14 @@ The weather station uses a configuration file system for easy customization:
 Example contents of `config.local.h`:
 
 ```c
-#define EVENT_NAME "MyCustomEventName"
-#define TIMEZONE -8
-#define CNTS_TO_MPH (2.174) // Conversion factor for the Mussel Rock Anemometer
+#define EVENT_NAME ("my_custom_event")
+#define TIMEZONE (-8)  // Pacific Standard Time
+#define USE_DST (1)    // Enable Daylight Saving Time
+#define DST_OFFSET (1) // 1 hour offset for DST
+#define DST_START_MONTH (3)  // March
+#define DST_START_WEEK (2)   // Second week
+#define DST_START_DOW (0)    // Sunday
+#define DST_END_MONTH (11)   // November
+#define DST_END_WEEK (1)     // First week
+#define DST_END_DOW (0)      // Sunday
+#define CNTS_TO_MPH (2.174)  // Conversion factor for the Mussel Rock Anemometer

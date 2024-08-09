@@ -15,13 +15,15 @@
 // Custom DST offset (if different from 1 hour)
 // #define DST_OFFSET (2)
 
-// Custom DST start dates (if different from USA dates)
-// #define DST_START_MONTH (4)
-// #define DST_START_DAY (1)
+// Custom DST start settings (if different from USA dates)
+// #define DST_START_MONTH (3)  // March
+// #define DST_START_WEEK (2)   // Second week
+// #define DST_START_DOW (0)    // Sunday (0 = Sunday, 1 = Monday, etc.)
 
-// Custom DST end dates (if different from USA dates)
-// #define DST_END_MONTH (10)
-// #define DST_END_DAY (31)
+// Custom DST end settings (if different from USA dates)
+// #define DST_END_MONTH (11)   // November
+// #define DST_END_WEEK (1)     // First week
+// #define DST_END_DOW (0)      // Sunday
 
 // Custom conversion factor for wind speed (e.g., for Mussel Rock Anemometer)
 // #define CNTS_TO_MPH (2.174)
