@@ -3,6 +3,13 @@
 // It publishes on each whole 5 minute interval (i.e. 10:00, 10:05; 10:10...).
 // The Boron uses the cell phone network, so it's important to keep the data usage very low.
 //===============================================================================================================
+// Include configuration
+#include "config.h"
+
+#ifdef CONFIG_LOCAL_H
+#include "config.local.h"
+#endif
+
 #include <math.h>
 #include <stdlib.h>
 #include <Wire.h>
@@ -12,14 +19,6 @@
 
 
 #define R2D (57.2958)
-
-#define CNTS_TO_MPH (2.25)     // Speed in mph = 2.25 * counts/sec for Davis 6410 Anemometer
-
-//-3- set this to the event name you are listening for
-#define EVENT_NAME ("obs")
-
-//-3- Set the desired timezone
-#define TIMEZONE (-7)
 
 volatile int counter;
 int publish_min;  // Publish an event the first time we see we're at this minute.
@@ -163,7 +162,6 @@ void loop()
 
         //-3- it looks like this is the problem.  If we lose connection the time could end up being much more than 10 seconds.
         dt = (float)(time_in_secs - last_gust_time_in_secs);
-        // speed = 2.174 * (float)(wind_cntr - last_wind_cntr) / dt;  // this gives wind speed in mph for the anemometer at Mussel Rock
         speed = CNTS_TO_MPH * (float)(wind_cntr - last_wind_cntr) / dt;  // this gives wind speed in mph for the Davis 6410 anemometer
         if (speed > gust) gust = speed;
         last_wind_cntr = wind_cntr;
@@ -330,21 +328,33 @@ float get_battery_voltage()
 }
 
 // ============================================================================
-// Return 1 if we're currently observing Daylight Savings Time.
-// I begin DST on March 12 and end it on November 5 (I think it always happens
-// on a Sunday in real life, but this will have to do)
+// Return 1 if we're currently observing Daylight Saving Time.
+// DST dates are calculated based on the configuration in config.h,
+// which can be overridden by settings in config.local.h.
+// By default, DST starts on the second Sunday in March and ends on the first
+// Sunday in November, but this can be customized in the config files.
+// See config.local.h.example for an example of how to override these settings.
 // ============================================================================
 int is_dst()
 {
-    int iday, imonth;
+    #if USE_DST
+    int year = Time.year();
+    int month = Time.month();
+    int day = Time.day();
 
-    imonth = Time.month();  // returns 1 to 12
-    iday = Time.day();      // returns 1 to 31
+    // Calculate the day of the month for DST start and end
+    int dstStart = (DST_START_WEEK * 7) - 7 + DST_START_DOW - (Time.weekday(DST_START_MONTH, 1, year) - 1) + 1;
+    if (dstStart > 7) dstStart -= 7;
+    
+    int dstEnd = (DST_END_WEEK * 7) - 7 + DST_END_DOW - (Time.weekday(DST_END_MONTH, 1, year) - 1) + 1;
+    if (dstEnd > 7) dstEnd -= 7;
 
-    if (imonth > 3   && imonth < 11) return(1);
-    if (imonth == 3  && iday >= 12) return(1);
-    if (imonth == 11 && iday <=5) return(1);
-    return(0);
+    if (month > DST_START_MONTH && month < DST_END_MONTH) return 1;
+    if (month == DST_START_MONTH && day >= dstStart) return 1;
+    if (month == DST_END_MONTH && day < dstEnd) return 1;
+    #endif
+
+    return 0;
 }
 
 //****************************************************************************//
@@ -354,11 +364,9 @@ int is_dst()
 //****************************************************************************//
 
 void setTimeZone() {
-    int dst_status;
-    // Set time zone (-7.0 during DST; -8.0 otherwise)
-    dst_status = is_dst();
-    if (dst_status) Time.zone(TIMEZONE);  // Set for Pacific daylight time.
-    else            Time.zone(TIMEZONE - 1);  // Set for Pacific standard time.
+    int dst_status = is_dst();
+    if (dst_status) Time.zone(TIMEZONE);
+    else Time.zone(TIMEZONE - DST_OFFSET);
 }
 
 //  Remote Reset Function

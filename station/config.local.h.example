@@ -1,0 +1,31 @@
+#ifndef CONFIG_LOCAL_H
+#define CONFIG_LOCAL_H
+
+// Uncomment and modify any of the following lines to override the default settings
+
+// Custom event name for publishing data
+// #define EVENT_NAME "my_custom_event"
+
+// Custom timezone setting (change as needed)
+// #define TIMEZONE (-8)  // Pacific Standard Time
+
+// Disable Daylight Saving Time
+// #define USE_DST (0)
+
+// Custom DST offset (if different from 1 hour)
+// #define DST_OFFSET (2)
+
+// Custom DST start settings (if different from USA dates)
+// #define DST_START_MONTH (3)  // March
+// #define DST_START_WEEK (2)   // Second week
+// #define DST_START_DOW (0)    // Sunday (0 = Sunday, 1 = Monday, etc.)
+
+// Custom DST end settings (if different from USA dates)
+// #define DST_END_MONTH (11)   // November
+// #define DST_END_WEEK (1)     // First week
+// #define DST_END_DOW (0)      // Sunday
+
+// Custom conversion factor for wind speed (e.g., for Mussel Rock Anemometer)
+// #define CNTS_TO_MPH (2.174)
+
+#endif // CONFIG_LOCAL_H
