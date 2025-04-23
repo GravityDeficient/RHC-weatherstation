@@ -12,6 +12,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <time.h>
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_BME280.h>
@@ -38,7 +39,7 @@ unsigned long previousMillis = 0;
 const long interval = 10000;
 
 void publish_wind_event(float dt);
-int is_dst(void);
+int is_dst(int year, int month, int day);
 void click(void);
 float get_battery_voltage(void);
 
@@ -335,26 +336,43 @@ float get_battery_voltage()
 // Sunday in November, but this can be customized in the config files.
 // See config.local.h.example for an example of how to override these settings.
 // ============================================================================
-int is_dst()
+int is_dst(int year, int month, int day)
 {
     #if USE_DST
-    int year = Time.year();
-    int month = Time.month();
-    int day = Time.day();
+    // DST start calculation
+    struct tm tmStart = {0};
+    tmStart.tm_year = year - 1900;
+    tmStart.tm_mon = DST_START_MONTH - 1;
+    tmStart.tm_mday = 1;
+    time_t tStart = mktime(&tmStart);
+    // Adjust to the correct Sunday
+    struct tm *startTime = localtime(&tStart);
+    int startWeekday = startTime->tm_wday; // 0 = Sunday, 1 = Monday, etc.
+    int dstStartDay = (7 - startWeekday) % 7 + 1 + (DST_START_WEEK - 1) * 7;
 
-    // Calculate the day of the month for DST start and end
-    int dstStart = (DST_START_WEEK * 7) - 7 + DST_START_DOW - (Time.weekday(DST_START_MONTH, 1, year) - 1) + 1;
-    if (dstStart > 7) dstStart -= 7;
-    
-    int dstEnd = (DST_END_WEEK * 7) - 7 + DST_END_DOW - (Time.weekday(DST_END_MONTH, 1, year) - 1) + 1;
-    if (dstEnd > 7) dstEnd -= 7;
+    // DST end calculation
+    struct tm tmEnd = {0};
+    tmEnd.tm_year = year - 1900;
+    tmEnd.tm_mon = DST_END_MONTH - 1;
+    tmEnd.tm_mday = 1;
+    time_t tEnd = mktime(&tmEnd);
+    // Adjust to the correct Sunday
+    struct tm *endTime = localtime(&tEnd);
+    int endWeekday = endTime->tm_wday; // 0 = Sunday, 1 = Monday, etc.
+    int dstEndDay = (7 - endWeekday) % 7 + 1 + (DST_END_WEEK - 1) * 7;
 
-    if (month > DST_START_MONTH && month < DST_END_MONTH) return 1;
-    if (month == DST_START_MONTH && day >= dstStart) return 1;
-    if (month == DST_END_MONTH && day < dstEnd) return 1;
+    // Check if current date is within DST
+    if (month > DST_START_MONTH && month < DST_END_MONTH) {
+        return 1; // Clearly within DST period
+    }
+    if (month == DST_START_MONTH && day >= dstStartDay) {
+        return 1; // During start month, on or after DST start day
+    }
+    if (month == DST_END_MONTH && day < dstEndDay) {
+        return 1; // During end month, before DST end day
+    }
     #endif
-
-    return 0;
+    return 0; // Not in DST
 }
 
 //****************************************************************************//
@@ -364,7 +382,7 @@ int is_dst()
 //****************************************************************************//
 
 void setTimeZone() {
-    int dst_status = is_dst();
+    int dst_status = is_dst(Time.year(), Time.month(), Time.day());
     if (dst_status) Time.zone(TIMEZONE);
     else Time.zone(TIMEZONE - DST_OFFSET);
 }
