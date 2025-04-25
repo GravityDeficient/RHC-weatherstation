@@ -6,10 +6,6 @@
 // Include configuration
 #include "config.h"
 
-#ifdef CONFIG_LOCAL_H
-#include "config.local.h"
-#endif
-
 #include <math.h>
 #include <stdlib.h>
 #include <Wire.h>
