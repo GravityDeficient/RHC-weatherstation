@@ -221,7 +221,7 @@ void publish_wind_event(float dt)
     int wind_gust;
     int wind_dir;
     float dir;
-    float temp, pressure;
+    float temp, pressure, humidity_raw;
     int itemp, ipressure, humidity, voltage;
 
     // Use global "wind_cntr" as the total cup turns for the publish interval
@@ -240,30 +240,31 @@ void publish_wind_event(float dt)
     ipressure = 0;
     humidity = 0;
     if (bme280_present) {
+        // Read sensor values and convert units
+        temp = (bme.readTemperature() * 9/5) + 32;    // Read Temperature in C, convert to F
+        itemp = (int)(temp + 0.5);                    // Round to nearest integer F
+        pressure = bme.readPressure() / 100;          // Read Pressure in Pa, convert to mBar
+        ipressure = (int)(pressure * 10.0 + 0.5);     // Store as integer (tenths of mBar)
+        humidity_raw = bme.readHumidity();            // Relative humidity percentage as float
+        humidity = (int)(humidity_raw + 0.5);         // Round to nearest integer
 
-        temp = (bme.readTemperature() * 9/5) + 32;    // Read Temperature in c convert to f
-        itemp = (int)(temp + 0.5);              // report in tenths of
-        pressure =  bme.readPressure() / 100;     // Read Pressure in Pa and divide by 100 to convert to mBar
-        ipressure = (int)(pressure * 10.0 + 0.5);      // report pressure in tenths of a mBar
-        humidity = bme.readHumidity();
-
-        Log.info("Temperature: %i F", temp);
-        Log.info("iTemperature: %i F", itemp);
-        Log.info("Pressure: %i mBar", pressure);
-        Log.info("iPressure: %i mBar", ipressure);
-        Log.info("Humidity: %i %", humidity);
+        // Log both raw sensor values and integer values used for transmission
+        Log.info("Sensor readings - BME280:");
+        Log.info("  Temperature: %d F (raw: %.1f F)", itemp, temp);
+        Log.info("  Pressure: %d.%d mBar (raw: %.2f mBar)", ipressure/10, ipressure%10, pressure);
+        Log.info("  Humidity: %d%% (raw: %.1f%%)", humidity, humidity_raw);
 
     } else if (bmp280_present) {
+        // Read sensor values and convert units
+        temp = (bmp.readTemperature() * 9/5) + 32;    // Read Temperature in C, convert to F
+        itemp = (int)(temp + 0.5);                    // Round to nearest integer F
+        pressure = bmp.readPressure() / 100;          // Read Pressure in Pa, convert to mBar
+        ipressure = (int)(pressure * 10.0 + 0.5);     // Store as integer (tenths of mBar)
 
-        temp = (bmp.readTemperature() * 9/5) + 32;    // Read Temperature in c convert to f
-        itemp = (int)(temp + 0.5);              // report in tenths of
-        pressure =  bmp.readPressure() / 100;     // Read Pressure in Pa and divide by 100 to convert to mBar
-        ipressure = (int)(pressure * 10.0 + 0.5);      // report pressure in tenths of a mBar
-
-        Log.info("Temperature: %i F", temp);
-        Log.info("iTemperature: %i F", itemp);
-        Log.info("Pressure: %i mBar", pressure);
-        Log.info("iPressure: %i mBar", ipressure);
+        // Log both raw sensor values and integer values used for transmission
+        Log.info("Sensor readings - BMP280:");
+        Log.info("  Temperature: %d F (raw: %.1f F)", itemp, temp);
+        Log.info("  Pressure: %d.%d mBar (raw: %.2f mBar)", ipressure/10, ipressure%10, pressure);
 
     }
 
