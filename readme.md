@@ -40,7 +40,7 @@ Example of the config.h settings:
 
 // Timezone settings
 // Modify for your location
-#define TIMEZONE (-8)  // Pacific Standard Time
+#define TIMEZONE (-7)  // Pacific Daylight Time: with USE_DST on, TIMEZONE is the summer offset
 
 // Daylight Saving Time settings
 #define USE_DST (1)    // Enable Daylight Saving Time

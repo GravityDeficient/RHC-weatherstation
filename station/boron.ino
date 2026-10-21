@@ -379,9 +379,14 @@ int is_dst(int year, int month, int day)
 //****************************************************************************//
 
 void setTimeZone() {
+    #if USE_DST
+    // TIMEZONE is the summer offset; outside DST the clock runs DST_OFFSET behind it
     int dst_status = is_dst(Time.year(), Time.month(), Time.day());
     if (dst_status) Time.zone(TIMEZONE);
     else Time.zone(TIMEZONE - DST_OFFSET);
+    #else
+    Time.zone(TIMEZONE);  // No DST: TIMEZONE is the year-round offset
+    #endif
 }
 
 //  Remote Reset Function
