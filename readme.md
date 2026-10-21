@@ -30,6 +30,7 @@ Key settings you might want to customize:
 - TIMEZONE: Set to your local timezone
 - USE_DST: Enable or disable Daylight Saving Time
 - CNTS_TO_MPH: Calibration factor for your specific anemometer
+- PUBLISH_INTERVAL_MIN: Minutes between published events (default 5; it must divide 60 and be at most 6)
 
 Example of the config.h settings:
 
@@ -59,6 +60,9 @@ Example of the config.h settings:
 // Wind speed calibration
 // Change this for your specific anemometer
 #define CNTS_TO_MPH (2.174)  // For Mussel Rock Anemometer
+
+// Publish interval
+#define PUBLISH_INTERVAL_MIN (5)
 ```
 
 After changing the configuration, compile and flash your device to apply the changes.
