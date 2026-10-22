@@ -10,7 +10,8 @@
 #define EVENT_NAME ("obs")
 
 // Timezone settings
-// Modify for your location
+// Modify for your location. With USE_DST on, TIMEZONE is the summer (DST) offset;
+// with USE_DST off, it is the year-round offset.
 #define TIMEZONE (-7)  // Pacific Daylight Time
 
 // Daylight Saving Time settings
