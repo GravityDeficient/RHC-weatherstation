@@ -1,10 +1,14 @@
 //===============================================================================================================
-// This code for the Particle Boron publishes an event with wind data every 5 minutes 24 hrs/day.
-// It publishes on each whole 5 minute interval (i.e. 10:00, 10:05; 10:10...).
+// This code for the Particle Boron publishes an event with wind data every PUBLISH_INTERVAL_MIN minutes
+// (see config.h) 24 hrs/day, on each whole interval (i.e. 10:00, 10:05, 10:10... at 5 minutes).
 // The Boron uses the cell phone network, so it's important to keep the data usage very low.
 //===============================================================================================================
 // Include configuration
 #include "config.h"
+
+#if (PUBLISH_INTERVAL_MIN) < 1 || (PUBLISH_INTERVAL_MIN) > 6 || (60 % (PUBLISH_INTERVAL_MIN)) != 0
+#error "PUBLISH_INTERVAL_MIN must divide 60 and be at most 6"
+#endif
 
 #include <math.h>
 #include <stdlib.h>
@@ -99,12 +103,12 @@ void setup()
     last_time_in_secs = hr*3600 + min*60 + sec;
     last_gust_time_in_secs = last_time_in_secs;
 
-    for(i=1; i<=12; i++)
+    for(i=1; i<=60/PUBLISH_INTERVAL_MIN; i++)
     {
-        publish_min = 5*i;
+        publish_min = PUBLISH_INTERVAL_MIN*i;
         if (publish_min > min) break;
     }
-    publish_min += 5;  // for the first event we'll go up to an extra 5 minutes just in case we're very close to an edge.
+    publish_min += PUBLISH_INTERVAL_MIN;  // for the first event we'll go up to an extra interval just in case we're very close to an edge.
     if (publish_min >= 60) publish_min -= 60;
 
     first_event = 1;
@@ -116,7 +120,7 @@ void setup()
 }
 
 //@@ loop================================================================================================================
-// We'll loop every 10 seconds and check the wind speed and direction.  We'll do this for 5 minutes, and then publish an
+// We'll loop every 10 seconds and check the wind speed and direction.  We'll do this for PUBLISH_INTERVAL_MIN minutes, and then publish an
 // event with the average wind speed, the wind gust (highest 10 second reading), and the average wind direction.
 //=======================================================================================================================
 void loop()
@@ -155,7 +159,7 @@ void loop()
         total_x += x;
         total_y += y;
 
-        wind_cntr = counter; // this keeps the total count for the event publish interval (currently 8 minutes)
+        wind_cntr = counter; // this keeps the total count for the event publish interval (PUBLISH_INTERVAL_MIN minutes)
 
         //-3- it looks like this is the problem.  If we lose connection the time could end up being much more than 10 seconds.
         dt = (float)(time_in_secs - last_gust_time_in_secs);
@@ -179,7 +183,7 @@ void loop()
 
         if (min == publish_min)
         {
-            publish_min += 5;
+            publish_min += PUBLISH_INTERVAL_MIN;
             if (publish_min >= 60) publish_min -= 60;
             wd.checkin();
 

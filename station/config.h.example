@@ -36,6 +36,11 @@
 #define CNTS_TO_MPH (2.25)  // Default for Davis 6410 Anemometer
 // For Mussel Rock Anemometer, use 2.174 instead
 
+// Publish interval
+// Minutes between published events. It must divide 60 and be at most 6, so the
+// Pro Mini watchdog (20 minutes) is pinged in time after a boot.
+#define PUBLISH_INTERVAL_MIN (5)
+
 //=========================================================================================
 // END OF USER CONFIGURATION
 //=========================================================================================
